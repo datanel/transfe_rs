@@ -1,0 +1,8 @@
+[package]
+name = "transfe_rs"
+version = "0.1.0"
+authors = ["Navitia <navitia@kisio.org>"]
+
+[dependencies]
+docopt = "0.6.83"
+rustc-serialize = "0.3"
