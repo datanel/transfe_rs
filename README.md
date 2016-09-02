@@ -1,4 +1,4 @@
-# tranfe_rs
+# transfe_rs
 
 Build GTFS transfers.txt file from stops.txt file
 
