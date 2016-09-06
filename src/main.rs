@@ -4,6 +4,7 @@ extern crate csv;
 
 use docopt::Docopt;
 
+
 const EARTH_RADIUS: f64 = 6372797.560856;
 
 const USAGE: &'static str = "
@@ -25,7 +26,7 @@ struct Args {
     flag_output: String,
 }
 
-#[derive(RustcDecodable)]
+#[derive(RustcDecodable, Debug)]
 struct StopPoint {
     stop_id: String,
     // stop_code: Option<String>,
@@ -48,7 +49,6 @@ impl StopPoint {
         let lambda1 = self.stop_lon.to_radians();
         let lambda2 = self.stop_lon.to_radians();
 
-
         let x = f64::sin((phi2 - phi1) / 2.).powi(2);
         let y = f64::cos(phi1) * f64::cos(phi2) * f64::sin((lambda2 - lambda1) / 2.).powi(2);
 
@@ -67,13 +67,15 @@ fn main() {
         .unwrap()
         .double_quote(true);
 
-    let mut stop_point_list = vec![];
-    for record in rdr.decode() {
-        let stop_point: StopPoint = record.unwrap();
-        if stop_point.location_type.unwrap_or(0) == 0 {
-            stop_point_list.push(stop_point)
-        }
-    }
+    let stop_point_list: Vec<StopPoint> = rdr.decode()
+        .filter_map(|rc| {
+            rc.map_err(|e| {
+                    println!("error at csv line decoding : {}", e)
+                })
+                .ok()
+        })
+        .filter(|st: &StopPoint| st.location_type.unwrap_or(0) == 0)
+        .collect();
 
     let mut wtr = csv::Writer::from_file(args.flag_output).unwrap();
     wtr.encode(("from_stop_id", "to_stop_id", "transfer_type", "min_transfer_time"))
@@ -84,7 +86,7 @@ fn main() {
             let distance = stop_point_1.distance_to(stop_point_2);
             if stop_point_1.distance_to(stop_point_2) <= 500. {
                 wtr.encode((&stop_point_1.stop_id, &stop_point_2.stop_id, 2, distance / 1.11))
-                        .unwrap();
+                    .unwrap();
             }
         }
     }
