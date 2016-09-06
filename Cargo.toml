@@ -6,3 +6,4 @@ authors = ["Navitia <navitia@kisio.org>"]
 [dependencies]
 docopt = "0.6.83"
 rustc-serialize = "0.3"
+csv = "0.14.7"
