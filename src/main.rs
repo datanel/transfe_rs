@@ -79,7 +79,7 @@ impl<'a, R: std::io::Read + 'a> Iterator for StopPointIter<'a, R> {
     fn next(&mut self) -> Option<Self::Item> {
         fn get(record: &[String], pos: usize) -> csv::Result<&str> {
             match record.get(pos) {
-                Some(s) => Ok(&s),
+                Some(s) => Ok(s),
                 None => Err(csv::Error::Decode(format!("Failed accessing record '{}'.", pos)))
             }
         }
