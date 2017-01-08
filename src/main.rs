@@ -57,11 +57,27 @@ struct StopPointIter<'a, R: std::io::Read + 'a> {
 }
 impl<'a, R: std::io::Read + 'a> StopPointIter<'a, R> {
     fn new(r: &'a mut csv::Reader<R>) -> Option<Self> {
-        let headers = if let Ok(hs) = r.headers() { hs } else { return None; };
+        let headers = if let Ok(hs) = r.headers() {
+            hs
+        } else {
+            return None;
+        };
         let get = |name| headers.iter().position(|s| s == name);
-        let stop_id_pos = if let Some(pos) = get("stop_id") { pos } else { return None; };
-        let stop_lat_pos = if let Some(pos) = get("stop_lat") { pos } else { return None; };
-        let stop_lon_pos = if let Some(pos) = get("stop_lon") { pos } else { return None; };
+        let stop_id_pos = if let Some(pos) = get("stop_id") {
+            pos
+        } else {
+            return None;
+        };
+        let stop_lat_pos = if let Some(pos) = get("stop_lat") {
+            pos
+        } else {
+            return None;
+        };
+        let stop_lon_pos = if let Some(pos) = get("stop_lon") {
+            pos
+        } else {
+            return None;
+        };
         Some(StopPointIter {
             iter: r.records(),
             stop_id_pos: stop_id_pos,
@@ -80,28 +96,29 @@ impl<'a, R: std::io::Read + 'a> Iterator for StopPointIter<'a, R> {
         fn get(record: &[String], pos: usize) -> csv::Result<&str> {
             match record.get(pos) {
                 Some(s) => Ok(s),
-                None => Err(csv::Error::Decode(format!("Failed accessing record '{}'.", pos)))
+                None => Err(csv::Error::Decode(format!("Failed accessing record '{}'.", pos))),
             }
         }
         fn parse_f64(s: &str) -> csv::Result<f64> {
-            s.parse().map_err(|_| {
-                csv::Error::Decode(format!("Failed converting '{}' from str.", s))
-            })
+            s.parse()
+                .map_err(|_| csv::Error::Decode(format!("Failed converting '{}' from str.", s)))
         }
 
-        self.iter.next().map(|r| r.and_then(|r| {
-            let stop_id = try!(get(&r, self.stop_id_pos));
-            let stop_lat = try!(get(&r, self.stop_lat_pos));
-            let stop_lat = try!(parse_f64(stop_lat));
-            let stop_lon = try!(get(&r, self.stop_lon_pos));
-            let stop_lon = try!(parse_f64(stop_lon));
-            Ok(StopPoint {
-                stop_id: stop_id.to_string(),
-                stop_lat: stop_lat,
-                stop_lon: stop_lon,
-                location_type: self.get_location_type(&r),
+        self.iter.next().map(|r| {
+            r.and_then(|r| {
+                let stop_id = try!(get(&r, self.stop_id_pos));
+                let stop_lat = try!(get(&r, self.stop_lat_pos));
+                let stop_lat = try!(parse_f64(stop_lat));
+                let stop_lon = try!(get(&r, self.stop_lon_pos));
+                let stop_lon = try!(parse_f64(stop_lon));
+                Ok(StopPoint {
+                    stop_id: stop_id.to_string(),
+                    stop_lat: stop_lat,
+                    stop_lon: stop_lon,
+                    location_type: self.get_location_type(&r),
+                })
             })
-        }))
+        })
     }
 }
 
@@ -119,9 +136,7 @@ fn main() {
     let stop_point_list: Vec<StopPoint> = StopPointIter::new(&mut rdr)
         .expect("Can't find needed fields in the header.")
         .filter_map(|rc| {
-            rc.map_err(|e| {
-                    println!("error at csv line decoding : {}", e)
-                })
+            rc.map_err(|e| println!("error at csv line decoding : {}", e))
                 .ok()
         })
         .filter(|st: &StopPoint| st.location_type.unwrap_or(0) == 0)
