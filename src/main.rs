@@ -56,34 +56,22 @@ struct StopPointIter<'a, R: std::io::Read + 'a> {
     location_type_pos: Option<usize>,
 }
 impl<'a, R: std::io::Read + 'a> StopPointIter<'a, R> {
-    fn new(r: &'a mut csv::Reader<R>) -> Option<Self> {
-        let headers = if let Ok(hs) = r.headers() {
-            hs
-        } else {
-            return None;
+    fn new(r: &'a mut csv::Reader<R>) -> csv::Result<Self> {
+        let headers = try!(r.headers());
+        let get_optional_pos = |name| headers.iter().position(|s| s == name);
+
+        let get_pos = |field| {
+            get_optional_pos(field).ok_or_else(|| {
+                csv::Error::Decode(format!("Invalid file, cannot find column '{}'", field))
+            })
         };
-        let get = |name| headers.iter().position(|s| s == name);
-        let stop_id_pos = if let Some(pos) = get("stop_id") {
-            pos
-        } else {
-            return None;
-        };
-        let stop_lat_pos = if let Some(pos) = get("stop_lat") {
-            pos
-        } else {
-            return None;
-        };
-        let stop_lon_pos = if let Some(pos) = get("stop_lon") {
-            pos
-        } else {
-            return None;
-        };
-        Some(StopPointIter {
+
+        Ok(StopPointIter {
             iter: r.records(),
-            stop_id_pos: stop_id_pos,
-            stop_lat_pos: stop_lat_pos,
-            stop_lon_pos: stop_lon_pos,
-            location_type_pos: get("location_type"),
+            stop_id_pos: try!(get_pos("stop_id")),
+            stop_lat_pos: try!(get_pos("stop_lat")),
+            stop_lon_pos: try!(get_pos("stop_lon")),
+            location_type_pos: get_optional_pos("location_type"),
         })
     }
     fn get_location_type(&self, record: &[String]) -> Option<u8> {
