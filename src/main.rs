@@ -3,7 +3,7 @@ extern crate docopt;
 extern crate csv;
 
 use docopt::Docopt;
-use std::f64::consts::SQRT_2;
+
 
 const EARTH_RADIUS: f64 = 6372797.560856;
 
@@ -19,7 +19,7 @@ Options:
   -i, --input=<file>   GTFS stops.txt file.
   -o, --output=<file>  GTFS transfers.txt file [default: ./transfers.txt].
   -d, --max-distance=<d>  the max distance to compute the tranfer [default: 500].
-  -s, --walking-speed=<s>  the walking speed in meters per second [default: 1.11].
+  -s, --walking-speed=<s>  the walking speed in meters per second. You may want to divide your initial speed by sqrt(2) to simulate Manhattan distances [default: 0.785].
 ";
 
 #[derive(Debug, RustcDecodable)]
@@ -85,12 +85,11 @@ fn main() {
     wtr.encode(("from_stop_id", "to_stop_id", "transfer_type", "min_transfer_time"))
         .unwrap();
 
-    let manhattan_speed = args.flag_walking_speed / SQRT_2; //https://en.wikipedia.org/wiki/Manhattan_distance
     for stop_point_1 in &stop_point_list {
         for stop_point_2 in &stop_point_list {
             let distance = stop_point_1.distance_to(stop_point_2);
             if stop_point_1.distance_to(stop_point_2) <= args.flag_max_distance {
-                wtr.encode((&stop_point_1.stop_id, &stop_point_2.stop_id, 2, distance / manhattan_speed))
+                wtr.encode((&stop_point_1.stop_id, &stop_point_2.stop_id, 2, distance / args.flag_walking_speed))
                     .unwrap();
             }
         }
