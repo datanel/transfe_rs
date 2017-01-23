@@ -7,23 +7,34 @@ use docopt::Docopt;
 
 const EARTH_RADIUS: f64 = 6372797.560856;
 
-const USAGE: &'static str = "
+const USAGE: &'static str =
+    "
 Building GTFS transfers.txt file from GTFS stops.txt.
 
 Usage:
   transfe_rs --help
-  transfe_rs --input=<file> [--output=<file>]
+  \
+     transfe_rs --input=<file> [--output=<file>] [--max-distance=<d>] [--walking-speed=<s>]
 
-Options:
+\
+     Options:
   -h, --help           Show this screen.
-  -i, --input=<file>   GTFS stops.txt file.
+  -i, --input=<file>   GTFS stops.txt \
+     file.
   -o, --output=<file>  GTFS transfers.txt file [default: ./transfers.txt].
+  -d, \
+     --max-distance=<d>  the max distance to compute the tranfer [default: 500].
+  -s, \
+     --walking-speed=<s>  the walking speed in meters per second. You may want to divide your \
+     initial speed by sqrt(2) to simulate Manhattan distances [default: 0.785].
 ";
 
 #[derive(Debug, RustcDecodable)]
 struct Args {
     flag_input: String,
     flag_output: String,
+    flag_max_distance: f64,
+    flag_walking_speed: f64,
 }
 
 #[derive(RustcDecodable, Debug)]
@@ -137,8 +148,11 @@ fn main() {
     for stop_point_1 in &stop_point_list {
         for stop_point_2 in &stop_point_list {
             let distance = stop_point_1.distance_to(stop_point_2);
-            if stop_point_1.distance_to(stop_point_2) <= 500. {
-                wtr.encode((&stop_point_1.stop_id, &stop_point_2.stop_id, 2, distance / 1.11))
+            if stop_point_1.distance_to(stop_point_2) <= args.flag_max_distance {
+                wtr.encode((&stop_point_1.stop_id,
+                             &stop_point_2.stop_id,
+                             2,
+                             distance / args.flag_walking_speed))
                     .unwrap();
             }
         }
