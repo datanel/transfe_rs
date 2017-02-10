@@ -1,40 +1,31 @@
 extern crate rustc_serialize;
-extern crate docopt;
 extern crate csv;
+extern crate structopt;
+#[macro_use]
+extern crate structopt_derive;
 
-use docopt::Docopt;
-
+use structopt::StructOpt;
 
 const EARTH_RADIUS: f64 = 6372797.560856;
 
-const USAGE: &'static str =
-    "
-Building GTFS transfers.txt file from GTFS stops.txt.
-
-Usage:
-  transfe_rs --help
-  \
-     transfe_rs --input=<file> [--output=<file>] [--max-distance=<d>] [--walking-speed=<s>]
-
-\
-     Options:
-  -h, --help           Show this screen.
-  -i, --input=<file>   GTFS stops.txt \
-     file.
-  -o, --output=<file>  GTFS transfers.txt file [default: ./transfers.txt].
-  -d, \
-     --max-distance=<d>  the max distance to compute the tranfer [default: 500].
-  -s, \
-     --walking-speed=<s>  the walking speed in meters per second. You may want to divide your \
-     initial speed by sqrt(2) to simulate Manhattan distances [default: 0.785].
-";
-
-#[derive(Debug, RustcDecodable)]
+#[derive(StructOpt)]
 struct Args {
-    flag_input: String,
-    flag_output: String,
-    flag_max_distance: f64,
-    flag_walking_speed: f64,
+    #[structopt(long = "input", short = "i", help = "GTFS stops.txt file")]
+    input: String,
+
+    #[structopt(long = "output", short = "o", default_value = "transfers.txt",
+                help = "GTFS transfers.txt file")]
+    output: String,
+
+    #[structopt(long = "max-distance", short = "d", default_value = "500",
+                help = "The max distance in meters to compute the tranfer")]
+    max_distance: f64,
+
+    #[structopt(long = "walking-speed", short = "s", default_value = "0.785",
+                help = "The walking speed in meters per second. \
+                        You may want to divide your initial speed by \
+                        sqrt(2) to simulate Manhattan distances")]
+    walking_speed: f64,
 }
 
 #[derive(RustcDecodable, Debug)]
@@ -122,13 +113,9 @@ impl<'a, R: std::io::Read + 'a> Iterator for StopPointIter<'a, R> {
 }
 
 fn main() {
-    println!("Launching transfe_rs...");
+    let args = Args::from_args();
 
-    let args: Args = Docopt::new(USAGE)
-        .and_then(|dopt| dopt.decode())
-        .unwrap_or_else(|e| e.exit());
-
-    let mut rdr = csv::Reader::from_file(args.flag_input)
+    let mut rdr = csv::Reader::from_file(args.input)
         .unwrap()
         .double_quote(true);
 
@@ -141,18 +128,18 @@ fn main() {
         .filter(|st: &StopPoint| st.location_type.unwrap_or(0) == 0)
         .collect();
 
-    let mut wtr = csv::Writer::from_file(args.flag_output).unwrap();
+    let mut wtr = csv::Writer::from_file(args.output).unwrap();
     wtr.encode(("from_stop_id", "to_stop_id", "transfer_type", "min_transfer_time"))
         .unwrap();
 
     for stop_point_1 in &stop_point_list {
         for stop_point_2 in &stop_point_list {
             let distance = stop_point_1.distance_to(stop_point_2);
-            if stop_point_1.distance_to(stop_point_2) <= args.flag_max_distance {
+            if stop_point_1.distance_to(stop_point_2) <= args.max_distance {
                 wtr.encode((&stop_point_1.stop_id,
                              &stop_point_2.stop_id,
                              2,
-                             distance / args.flag_walking_speed))
+                             (distance / args.walking_speed) as u32))
                     .unwrap();
             }
         }
