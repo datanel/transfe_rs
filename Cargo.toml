@@ -2,8 +2,10 @@
 name = "transfe_rs"
 version = "0.1.0"
 authors = ["Navitia <navitia@kisio.org>"]
+description = "Building GTFS transfers.txt file from GTFS stops.txt."
 
 [dependencies]
-docopt = "0.6.83"
+structopt = "0.0.3"
+structopt-derive = "0.0.3"
 rustc-serialize = "0.3"
-csv = "0.14.7"
+csv = "0.15"
