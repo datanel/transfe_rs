@@ -1,4 +1,3 @@
-extern crate rustc_serialize;
 extern crate csv;
 extern crate structopt;
 #[macro_use]
@@ -28,7 +27,7 @@ struct Args {
     walking_speed: f64,
 }
 
-#[derive(RustcDecodable, Debug)]
+#[derive(Debug)]
 struct StopPoint {
     stop_id: String,
     stop_lat: f64,
