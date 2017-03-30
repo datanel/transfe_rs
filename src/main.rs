@@ -25,6 +25,10 @@ struct Args {
                         You may want to divide your initial speed by \
                         sqrt(2) to simulate Manhattan distances")]
     walking_speed: f64,
+
+    #[structopt(long = "transfer-time", short = "t", default_value = "0",
+                help = "Transfer time in second.")]
+    transfer_time: u32,
 }
 
 #[derive(Debug)]
@@ -138,7 +142,7 @@ fn main() {
                 wtr.encode((&stop_point_1.stop_id,
                              &stop_point_2.stop_id,
                              2,
-                             (distance / args.walking_speed) as u32))
+                             ((distance / args.walking_speed) as u32) + args.transfer_time))
                     .unwrap();
             }
         }
