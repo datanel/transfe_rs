@@ -44,7 +44,7 @@ impl StopPoint {
         let phi1 = self.stop_lat.to_radians();
         let phi2 = other.stop_lat.to_radians();
         let lambda1 = self.stop_lon.to_radians();
-        let lambda2 = self.stop_lon.to_radians();
+        let lambda2 = other.stop_lon.to_radians();
 
         let x = f64::sin((phi2 - phi1) / 2.).powi(2);
         let y = f64::cos(phi1) * f64::cos(phi2) * f64::sin((lambda2 - lambda1) / 2.).powi(2);
@@ -138,7 +138,7 @@ fn main() {
     for stop_point_1 in &stop_point_list {
         for stop_point_2 in &stop_point_list {
             let distance = stop_point_1.distance_to(stop_point_2);
-            if stop_point_1.distance_to(stop_point_2) <= args.max_distance {
+            if distance <= args.max_distance {
                 wtr.encode((&stop_point_1.stop_id,
                              &stop_point_2.stop_id,
                              2,
